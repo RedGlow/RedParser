@@ -46,6 +46,8 @@
     </CodeAnalysisDependentAssemblyPaths>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="EnumerationOfBase.cs" />
+    <Compile Include="SimpleBaseClass.cs" />
     <Compile Include="JustOneEnumerableParameter.cs" />
     <Compile Include="JustOneEnumParameter.cs" />
     <Compile Include="JustOneDoubleParameter.cs" />
@@ -56,6 +58,7 @@
     <Compile Include="JustOneStringParameter.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="BasicTests.cs" />
+    <Compile Include="SimpleDerivedClass.cs" />
     <Compile Include="TestBase.cs" />
   </ItemGroup>
   <ItemGroup>
@@ -81,6 +84,9 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="BasicTests_JustOneEnumerableParameter.xml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="BasicTests_EnumerationOfBase.xml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
   </ItemGroup>

@@ -1,0 +1,7 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<EnumerationOfBase>
+  <Contents>
+    <SimpleBaseClass X="33"/>
+    <SimpleDerivedClass X="44" Y="hello"/>
+  </Contents>
+</EnumerationOfBase>
