@@ -1,0 +1,9 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<JustOneEnumerableParameter>
+  <Values>
+    <Int32>3</Int32>
+    <Int32>5</Int32>
+    <Int32>8</Int32>
+    <Int32>13</Int32>
+  </Values>
+</JustOneEnumerableParameter>

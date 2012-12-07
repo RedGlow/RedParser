@@ -46,6 +46,7 @@
     </CodeAnalysisDependentAssemblyPaths>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="JustOneEnumerableParameter.cs" />
     <Compile Include="JustOneEnumParameter.cs" />
     <Compile Include="JustOneDoubleParameter.cs" />
     <Compile Include="JustOneDecimalParameter.cs" />
@@ -77,6 +78,9 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="BasicTests_JustOneEnumParameter.xml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="BasicTests_JustOneEnumerableParameter.xml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
   </ItemGroup>

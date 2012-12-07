@@ -58,5 +58,16 @@ namespace RedParserTests
             var x = parse<JustOneEnumParameter>("BasicTests_JustOneEnumParameter.xml");
             Assert.AreEqual(ConsoleColor.DarkMagenta, x.Color);
         }
+
+        [TestMethod]
+        public void JustOneEnumerableParameter()
+        {
+            var x = parse<JustOneEnumerableParameter>("BasicTests_JustOneEnumerableParameter.xml");
+            Assert.AreEqual(4, x.Values.Count);
+            Assert.AreEqual(3, x.Values[0]);
+            Assert.AreEqual(5, x.Values[1]);
+            Assert.AreEqual(8, x.Values[2]);
+            Assert.AreEqual(13, x.Values[3]);
+        }
     }
 }
