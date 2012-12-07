@@ -6,7 +6,7 @@ using System.Text;
 namespace RedParser
 {
     [AttributeUsage(AttributeTargets.Class, Inherited = false, AllowMultiple = false)]
-    sealed class RealTypeAttributeAttribute : Attribute
+    public sealed class RealTypeAttributeAttribute : Attribute
     {
         readonly string attributeName;
 
