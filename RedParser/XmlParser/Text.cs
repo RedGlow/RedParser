@@ -13,7 +13,7 @@ namespace RedParser.XmlParser
         }
 
         private string value;
-        public override string Value { get { return Value; } }
+        public override string Value { get { return value; } }
 
         private Extension extension;
         public override Extension ConsumeAndGetExtension()
