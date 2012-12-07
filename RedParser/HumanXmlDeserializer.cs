@@ -22,6 +22,12 @@ namespace RedParser
             DefaultPrefixes = new List<string>();
         }
 
+        public T Deserialize<T>(string filename)
+        {
+            using (var xmlReader = XmlReader.Create(filename))
+                return Deserialize<T>(xmlReader);
+        }
+
         public T Deserialize<T>(XmlReader xmlReader)
         {
             xmlReader.MoveToContent();
