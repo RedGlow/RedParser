@@ -55,6 +55,7 @@
     <Compile Include="UnhandledException.cs" />
     <Compile Include="UnknownEnumValueException.cs" />
     <Compile Include="UnknownParameterException.cs" />
+    <Compile Include="XmlNameAttribute.cs" />
     <Compile Include="XmlParser\Attribute.cs" />
     <Compile Include="XmlParser\Element.cs" />
     <Compile Include="XmlParser\ElementProvider.cs" />

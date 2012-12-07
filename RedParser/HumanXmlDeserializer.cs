@@ -153,6 +153,23 @@ namespace RedParser
                     var constructorParameters = constructor.GetParameters();
                     var constructorParametersByName = constructorParameters.ToDictionary(cp => cp.Name);
                     var parameters = new Dictionary<string, object>();
+                    // get name translations for XML
+                    var xmlNameToConstructorName =
+                        new Dictionary<string, string>();
+                    foreach (var constructorParameter in constructorParameters)
+                    {
+                        var parameterName = constructorParameter.Name;
+                        var xmlNameAttributes =
+                            constructorParameter.GetCustomAttributes(typeof(XmlNameAttribute), false);
+                        if (xmlNameAttributes.Length != 0)
+                            xmlNameToConstructorName[
+                                ((XmlNameAttribute)xmlNameAttributes[0]).Value] =
+                                parameterName;
+                        else
+                            xmlNameToConstructorName[
+                                char.ToUpper(parameterName[0]) + parameterName.Substring(1)] =
+                                parameterName;
+                    }
                     // parse sub-nodes
                     var nodeExtensions = new Dictionary<string, Extension>();
                     while (element.NodesEnumerator.MoveNext())
@@ -163,8 +180,9 @@ namespace RedParser
                             currentNode.Name.Equals(typeAttribute))
                             continue;
                         // check name
-                        var name = char.ToLower(currentNode.Name[0]) + currentNode.Name.Substring(1);
-                        if (!constructorParametersByName.ContainsKey(name))
+                        string name = null;
+                        xmlNameToConstructorName.TryGetValue(currentNode.Name, out name);
+                        if (name == null || !constructorParametersByName.ContainsKey(name))
                         {
                             var extension = currentNode.ConsumeAndGetExtension();
                             throw new UnknownParameterException(name,
