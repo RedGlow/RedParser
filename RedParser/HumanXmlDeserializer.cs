@@ -15,11 +15,11 @@ namespace RedParser
     /// </summary>
     public class HumanXmlDeserializer
     {
-        public List<string> DefaultPrefixes { get; private set;  }
+        public List<TypeSearchScope> TypeSearchScopes { get; private set;  }
 
         public HumanXmlDeserializer()
         {
-            DefaultPrefixes = new List<string>();
+            TypeSearchScopes = new List<TypeSearchScope>();
         }
 
         public T Deserialize<T>(string filename)
@@ -312,15 +312,18 @@ namespace RedParser
             var subTypeGenericsString = subType != null && subType.IsGenericType ?
                 string.Join(",", from subGeneric in subTypeGenerics select "[" + subGeneric.FullName + "]") :
                 null;
-            foreach (var defaultPrefix in DefaultPrefixes)
+            foreach (var typeSearchScope in TypeSearchScopes)
             {
-                var typeName = defaultPrefix + "." + baseTypeName;
+                var typeName = string.Format("{0}.{1}, {2}",
+                    typeSearchScope.Namespace,
+                    baseTypeName,
+                    typeSearchScope.AssemblyFullName);
                 specificType = Type.GetType(typeName);
                 if (specificType != null)
                     break;
                 if (subTypeGenericsString != null)
                 {
-                    typeName = defaultPrefix + "." + baseTypeName + "`" +
+                    typeName = typeSearchScope + "." + baseTypeName + "`" +
                         subTypeGenerics.Length.ToString() + "[" +
                         subTypeGenericsString + "]";
                     specificType = Type.GetType(typeName);

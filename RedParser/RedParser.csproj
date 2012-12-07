@@ -51,6 +51,7 @@
     <Compile Include="TooComplexAttributeException.cs" />
     <Compile Include="TooSimpleAttributeException.cs" />
     <Compile Include="TypeNotFoundException.cs" />
+    <Compile Include="TypeSearchScope.cs" />
     <Compile Include="UnhandledException.cs" />
     <Compile Include="UnknownEnumValueException.cs" />
     <Compile Include="UnknownParameterException.cs" />
