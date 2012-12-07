@@ -260,6 +260,7 @@ namespace RedParser
             return type == typeof(int) ||
                 type == typeof(decimal) ||
                 type == typeof(double) ||
+                type == typeof(float) ||
                 type == typeof(bool) ||
                 type == typeof(string) ||
                 type.IsEnum;
@@ -267,12 +268,15 @@ namespace RedParser
 
         private object parseAs(Type type, SimpleContent simpleContent)
         {
+            var invariant = System.Globalization.CultureInfo.InvariantCulture;
             if (type == typeof(int))
                 return int.Parse(simpleContent.Value);
             else if (type == typeof(decimal))
-                return decimal.Parse(simpleContent.Value);
+                return decimal.Parse(simpleContent.Value, invariant);
             else if (type == typeof(double))
-                return double.Parse(simpleContent.Value);
+                return double.Parse(simpleContent.Value, invariant);
+            else if (type == typeof(float))
+                return float.Parse(simpleContent.Value, invariant);
             else if (type == typeof(bool))
                 return bool.Parse(simpleContent.Value);
             else if (type == typeof(string))
