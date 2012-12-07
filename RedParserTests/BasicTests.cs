@@ -63,17 +63,21 @@ namespace RedParserTests
         public void JustOneEnumerableParameter()
         {
             var x = Parse<JustOneEnumerableParameter>("BasicTests_JustOneEnumerableParameter.xml");
-            Assert.AreEqual(4, x.Values.Count);
-            Assert.AreEqual(3, x.Values[0]);
-            Assert.AreEqual(5, x.Values[1]);
-            Assert.AreEqual(8, x.Values[2]);
-            Assert.AreEqual(13, x.Values[3]);
+            AssertAreEnumerationsEqual(
+                new int[] { 3, 5, 8, 13 },
+                x.Values);
         }
 
         [TestMethod]
         public void EnumerationOfBase()
         {
             var x = Parse<EnumerationOfBase>("BasicTests_EnumerationOfBase.xml");
+            AssertAreEnumerationsEqual(
+                new SimpleBaseClass[] {
+                    new SimpleBaseClass(33),
+                    new SimpleDerivedClass(44, "hello")
+                },
+                x.Contents);
         }
     }
 }

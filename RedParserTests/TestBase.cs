@@ -25,23 +25,23 @@ namespace RedParserTests
         }
 
         protected void AssertAreEnumerationsEqual<T>(
-            IEnumerable<T> first,
-            IEnumerable<T> second)
+            IEnumerable<T> expected,
+            IEnumerable<T> actual)
         {
-            var firstEnumerator = first.GetEnumerator();
-            var secondEnumerator = second.GetEnumerator();
+            var expectedEnumerator = expected.GetEnumerator();
+            var actualEnumerator = actual.GetEnumerator();
             for (; ; )
             {
-                var firstNext = firstEnumerator.MoveNext();
-                var secondNext = secondEnumerator.MoveNext();
-                if (firstNext && !secondNext)
+                var expectedNext = expectedEnumerator.MoveNext();
+                var actualNext = actualEnumerator.MoveNext();
+                if (expectedNext && !actualNext)
                     Assert.Fail("Second enumeration shorter than first.");
-                else if (!firstNext && secondNext)
+                else if (!expectedNext && actualNext)
                     Assert.Fail("First enumeration shorter than second.");
-                else if (!firstNext && !secondNext)
+                else if (!expectedNext && !actualNext)
                     break;
                 else
-                    Assert.Equals(firstEnumerator.Current, secondEnumerator.Current);
+                    Assert.AreEqual(expectedEnumerator.Current, actualEnumerator.Current);
             }
         }
     }
