@@ -51,5 +51,12 @@ namespace RedParserTests
             var x = parse<JustOneDecimalParameter>("BasicTests_JustOneDecimalParameter.xml");
             Assert.AreEqual(11.1M, x.Quantity);
         }
+
+        [TestMethod]
+        public void JustOneEnumParameter()
+        {
+            var x = parse<JustOneEnumParameter>("BasicTests_JustOneEnumParameter.xml");
+            Assert.AreEqual(ConsoleColor.DarkMagenta, x.Color);
+        }
     }
 }
