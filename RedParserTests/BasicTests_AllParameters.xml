@@ -1,0 +1,14 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<AllParameters>
+  <Int>1</Int>
+  <Float>2.22</Float>
+  <Double>3.33</Double>
+  <Decimal>4.44</Decimal>
+  <String>hello</String>
+  <Enum>Blue</Enum>
+  <BaseClass Type="SimpleBaseClass" X="55"/>
+  <Enumeration>
+    <SimpleBaseClass X="66"/>
+    <SimpleDerivedClass X="77" Y="hello again"/>
+  </Enumeration>
+</AllParameters>

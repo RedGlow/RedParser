@@ -2,9 +2,11 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using RedParser;
 
 namespace RedParserTests
 {
+    [RealTypeAttribute("Type")]
     class SimpleBaseClass
     {
         public readonly int X;

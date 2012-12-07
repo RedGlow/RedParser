@@ -79,5 +79,24 @@ namespace RedParserTests
                 },
                 x.Contents);
         }
+
+        [TestMethod]
+        public void AllParameters()
+        {
+            var x = Parse<AllParameters>("BasicTests_AllParameters.xml");
+            Assert.AreEqual(1, x.Int);
+            Assert.AreEqual(2.22f, x.Float);
+            Assert.AreEqual(3.33, x.Double);
+            Assert.AreEqual(4.44m, x.Decimal);
+            Assert.AreEqual("hello", x.String);
+            Assert.AreEqual(ConsoleColor.Blue, x.Enum);
+            Assert.AreEqual(new SimpleBaseClass(55), x.BaseClass);
+            AssertAreEnumerationsEqual(
+                new SimpleBaseClass[] {
+                    new SimpleBaseClass(66),
+                    new SimpleDerivedClass(77, "hello again")
+                },
+                x.Enumeration);
+        }
     }
 }
