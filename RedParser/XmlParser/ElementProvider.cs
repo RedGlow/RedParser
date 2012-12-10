@@ -8,7 +8,7 @@ using System.IO;
 namespace RedParser.XmlParser
 {
     /// <summary>
-    /// An XML parser capable to keeping track of start-end of elements and remove
+    /// An XML parser capable of keeping track of start-end of elements and remove
     /// irregular handling of empty elements.
     /// </summary>
     class ElementProvider

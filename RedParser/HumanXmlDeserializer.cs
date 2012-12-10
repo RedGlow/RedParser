@@ -44,212 +44,15 @@ namespace RedParser
             try
             {
                 if (isSimpleType(type))
-                {
-                    if (node is SimpleContent)
-                        return parseAs(type, (SimpleContent)node);
-                    else
-                    {
-                        Debug.Assert(node is Element);
-                        var element = (Element)node;
-                        element.NodesEnumerator.MoveNext();
-                        var currentNode = element.NodesEnumerator.Current;
-                        if (!(currentNode is Text))
-                        {
-                            var extension = element.ConsumeAndGetExtension();
-                            throw new TooSimpleElementException(element.Name,
-                                extension.StartLineNumber, extension.StartLinePosition,
-                                extension.EndLineNumber, extension.EndLinePosition);
-                        }
-                        if (element.NodesEnumerator.MoveNext())
-                        {
-                            var extension = element.ConsumeAndGetExtension();
-                            throw new TooSimpleElementException(element.Name,
-                                extension.StartLineNumber, extension.StartLinePosition,
-                                extension.EndLineNumber, extension.EndLinePosition);
-                        }
-                        return parseAs(type, (Text)currentNode);
-                    }
-                }
-                // IEnumerable<T> parsing
+                    // simple type (int, double, enum, ...) parsing
+                    return deserializeSimpleType(type, node);
                 else if (type.GetInterfaces().Concat(Enumerable.Repeat(type, 1))
                     .Any(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(IEnumerable<>)))
-                {
-                    if (!(node is Element))
-                    {
-                        var extension = node.ConsumeAndGetExtension();
-                        throw new TooSimpleElementException(node.Name,
-                            extension.StartLineNumber, extension.StartLinePosition,
-                            extension.EndLineNumber, extension.EndLinePosition);
-                    }
-                    var element = (Element)node;
-
-                    var genericListType = typeof(List<>).MakeGenericType(type.GetGenericArguments()[0]);
-                    var list = genericListType.GetConstructor(Type.EmptyTypes).Invoke(new object[] { });
-                    var addMethod = genericListType.GetMethod("Add");
-                    while (element.NodesEnumerator.MoveNext())
-                    {
-                        var currentNode = element.NodesEnumerator.Current;
-                        var nodeName = currentNode.Name;
-                        if (nodeName == "null")
-                        {
-                            addMethod.Invoke(list, new object[] { null });
-                            continue;
-                        }
-                        Type specificType = findType(type, nodeName);
-                        if (specificType == null)
-                        {
-                            var extension = currentNode.ConsumeAndGetExtension();
-                            throw new TypeNotFoundException(nodeName,
-                                extension.StartLineNumber, extension.StartLinePosition,
-                                extension.EndLineNumber, extension.EndLinePosition);
-                        }
-                        var subObject = deserialize(specificType, currentNode);
-                        addMethod.Invoke(list, new object[] { subObject });
-                    }
-                    return list;
-                }
-                // Complex type parsing
+                    // IEnumerable<T> parsing
+                    return deserializeIEnumerable(type, node);
                 else
-                {
-                    if (!(node is Element))
-                    {
-                        var extension = node.ConsumeAndGetExtension();
-                        throw new TooSimpleElementException(node.Name,
-                            extension.StartLineNumber, extension.StartLinePosition,
-                            extension.EndLineNumber, extension.EndLinePosition);
-                    }
-                    var element = (Element)node;
-                    // find real type if necessary
-                    var realTypeAttributes = (RealTypeAttributeAttribute[])
-                        type.GetCustomAttributes(typeof(RealTypeAttributeAttribute), false);
-                    string typeAttribute = null;
-                    if (realTypeAttributes.Length != 0)
-                    {
-                        Debug.Assert(realTypeAttributes.Length == 1);
-                        var realTypeAttribute = realTypeAttributes[0];
-                        var typeName = element.GetAttribute(realTypeAttribute.AttributeName);
-                        if (typeName == null && realTypeAttribute.Compulsory)
-                        {
-                            var extension = element.ConsumeAndGetExtension();
-                            throw new MissingTypeSpecifierException(
-                                "typeName",
-                                extension.StartLineNumber, extension.StartLinePosition,
-                                extension.EndLineNumber, extension.EndLinePosition);
-                        }
-                        if (typeName != null)
-                            type = findType(type, typeName);
-                        typeAttribute = realTypeAttribute.AttributeName;
-                    }
-                    // get constructor and parameters
-                    var constructors = type.GetConstructors();
-                    if (constructors.Length != 1)
-                    {
-                        var extension = node.ConsumeAndGetExtension();
-                        throw new AmbiguousConstructorException(type,
-                            extension.StartLineNumber, extension.StartLinePosition,
-                            extension.EndLineNumber, extension.EndLinePosition);
-                    }
-                    var constructor = constructors[0];
-                    var constructorParameters = constructor.GetParameters();
-                    var constructorParametersByName = constructorParameters.ToDictionary(cp => cp.Name);
-                    var parameters = new Dictionary<string, object>();
-                    // get name translations for XML
-                    var xmlNameToConstructorName =
-                        new Dictionary<string, string>();
-                    foreach (var constructorParameter in constructorParameters)
-                    {
-                        var parameterName = constructorParameter.Name;
-                        var xmlNameAttributes =
-                            constructorParameter.GetCustomAttributes(typeof(XmlNameAttribute), false);
-                        if (xmlNameAttributes.Length != 0)
-                            xmlNameToConstructorName[
-                                ((XmlNameAttribute)xmlNameAttributes[0]).Value] =
-                                parameterName;
-                        else
-                            xmlNameToConstructorName[
-                                char.ToUpper(parameterName[0]) + parameterName.Substring(1)] =
-                                parameterName;
-                    }
-                    // parse sub-nodes
-                    var nodeExtensions = new Dictionary<string, Extension>();
-                    while (element.NodesEnumerator.MoveNext())
-                    {
-                        var currentNode = element.NodesEnumerator.Current;
-                        // skip attribute if type attribute
-                        if (typeAttribute != null && currentNode is XmlParser.Attribute &&
-                            currentNode.Name.Equals(typeAttribute))
-                            continue;
-                        // check name
-                        string name = null;
-                        xmlNameToConstructorName.TryGetValue(currentNode.Name, out name);
-                        if (name == null || !constructorParametersByName.ContainsKey(name))
-                        {
-                            var extension = currentNode.ConsumeAndGetExtension();
-                            throw new UnknownParameterException(name,
-                                extension.StartLineNumber, extension.StartLinePosition,
-                                extension.EndLineNumber, extension.EndLinePosition);
-                        }
-                        // parse sub-element
-                        parameters[name] = deserialize(
-                            constructorParametersByName[name].ParameterType,
-                            currentNode);
-                        // mark as read
-                        constructorParametersByName.Remove(name);
-                        // save position
-                        nodeExtensions[name] = currentNode.ConsumeAndGetExtension();
-                    }
-                    // fill parameters from defaults
-                    var fillerParameters = constructorParametersByName.Values
-                        .Where(parameter => parameter.RawDefaultValue != DBNull.Value)
-                        .ToList();
-                    foreach (var fillerParameter in fillerParameters)
-                    {
-                        parameters[fillerParameter.Name] = fillerParameter.RawDefaultValue;
-                        constructorParametersByName.Remove(fillerParameter.Name);
-                    }
-                    // fill parameters from DefaultValueAttribute
-                    foreach (var missingParameter in constructorParametersByName.Values.ToList())
-                    {
-                        var defaultValueAttributes = missingParameter.GetCustomAttributes(
-                            typeof(DefaultValueAttribute), false);
-                        if (defaultValueAttributes.Length > 0)
-                        {
-                            parameters[missingParameter.Name] =
-                                ((DefaultValueAttribute)defaultValueAttributes[0]).Value(type);
-                            constructorParametersByName.Remove(missingParameter.Name);
-                        }
-                    }
-                    // check missing
-                    if (constructorParametersByName.Count > 0)
-                    {
-                        var extension = node.ConsumeAndGetExtension();
-                        throw new MissingParametersException(constructorParametersByName.Keys,
-                            extension.StartLineNumber, extension.StartLinePosition,
-                            extension.EndLineNumber, extension.EndLinePosition);
-                    }
-                    // create object
-                    try
-                    {
-                        return constructor.Invoke(
-                            (from parameter in constructorParameters
-                             select parameters[parameter.Name]).ToArray());
-                    }
-                    catch (TargetInvocationException tie)
-                    {
-                        if (tie.InnerException is ArgumentException)
-                        {
-                            var ae = tie.InnerException as ArgumentException;
-                            if (ae.ParamName != null && nodeExtensions.ContainsKey(ae.ParamName))
-                            {
-                                var extension = nodeExtensions[ae.ParamName];
-                                throw new UnhandledException(ae,
-                                    extension.StartLineNumber, extension.StartLinePosition,
-                                    extension.EndLineNumber, extension.EndLinePosition);
-                            }
-                        }
-                        throw tie.InnerException;
-                    }
-                }
+                    // Complex type (classes) parsing
+                    return deserializeComplexType(type, node);
             }
             catch (HumanXmlDeserializerException)
             {
@@ -273,6 +76,213 @@ namespace RedParser
             }
         }
 
+        private object deserializeSimpleType(Type type, Node node)
+        {
+            if (node is SimpleContent)
+                return deserializeSimpleContent(type, (SimpleContent)node);
+            else
+            {
+                Debug.Assert(node is Element);
+                var element = (Element)node;
+                element.NodesEnumerator.MoveNext();
+                var currentNode = element.NodesEnumerator.Current;
+                if (!(currentNode is Text))
+                {
+                    var extension = element.ConsumeAndGetExtension();
+                    throw new TooSimpleElementException(element.Name,
+                        extension.StartLineNumber, extension.StartLinePosition,
+                        extension.EndLineNumber, extension.EndLinePosition);
+                }
+                if (element.NodesEnumerator.MoveNext())
+                {
+                    var extension = element.ConsumeAndGetExtension();
+                    throw new TooSimpleElementException(element.Name,
+                        extension.StartLineNumber, extension.StartLinePosition,
+                        extension.EndLineNumber, extension.EndLinePosition);
+                }
+                return deserializeSimpleContent(type, (Text)currentNode);
+            }
+        }
+
+        private object deserializeIEnumerable(Type type, Node node)
+        {
+            if (!(node is Element))
+            {
+                var extension = node.ConsumeAndGetExtension();
+                throw new TooSimpleElementException(node.Name,
+                    extension.StartLineNumber, extension.StartLinePosition,
+                    extension.EndLineNumber, extension.EndLinePosition);
+            }
+            var element = (Element)node;
+
+            var genericListType = typeof(List<>).MakeGenericType(type.GetGenericArguments()[0]);
+            var list = genericListType.GetConstructor(Type.EmptyTypes).Invoke(new object[] { });
+            var addMethod = genericListType.GetMethod("Add");
+            while (element.NodesEnumerator.MoveNext())
+            {
+                var currentNode = element.NodesEnumerator.Current;
+                var nodeName = currentNode.Name;
+                if (nodeName == "null")
+                {
+                    addMethod.Invoke(list, new object[] { null });
+                    continue;
+                }
+                Type specificType = findType(type, nodeName);
+                if (specificType == null)
+                {
+                    var extension = currentNode.ConsumeAndGetExtension();
+                    throw new TypeNotFoundException(nodeName,
+                        extension.StartLineNumber, extension.StartLinePosition,
+                        extension.EndLineNumber, extension.EndLinePosition);
+                }
+                var subObject = deserialize(specificType, currentNode);
+                addMethod.Invoke(list, new object[] { subObject });
+            }
+            return list;
+        }
+
+        private object deserializeComplexType(Type type, Node node)
+        {
+            if (!(node is Element))
+            {
+                var extension = node.ConsumeAndGetExtension();
+                throw new TooSimpleElementException(node.Name,
+                    extension.StartLineNumber, extension.StartLinePosition,
+                    extension.EndLineNumber, extension.EndLinePosition);
+            }
+            var element = (Element)node;
+            // find real type if necessary
+            var realTypeAttributes = (RealTypeAttributeAttribute[])
+                type.GetCustomAttributes(typeof(RealTypeAttributeAttribute), false);
+            string typeAttribute = null;
+            if (realTypeAttributes.Length != 0)
+            {
+                Debug.Assert(realTypeAttributes.Length == 1);
+                var realTypeAttribute = realTypeAttributes[0];
+                var typeName = element.GetAttribute(realTypeAttribute.AttributeName);
+                if (typeName == null && realTypeAttribute.Compulsory)
+                {
+                    var extension = element.ConsumeAndGetExtension();
+                    throw new MissingTypeSpecifierException(
+                        "typeName",
+                        extension.StartLineNumber, extension.StartLinePosition,
+                        extension.EndLineNumber, extension.EndLinePosition);
+                }
+                if (typeName != null)
+                    type = findType(type, typeName);
+                typeAttribute = realTypeAttribute.AttributeName;
+            }
+            // get constructor and parameters
+            var constructors = type.GetConstructors();
+            if (constructors.Length != 1)
+            {
+                var extension = node.ConsumeAndGetExtension();
+                throw new AmbiguousConstructorException(type,
+                    extension.StartLineNumber, extension.StartLinePosition,
+                    extension.EndLineNumber, extension.EndLinePosition);
+            }
+            var constructor = constructors[0];
+            var constructorParameters = constructor.GetParameters();
+            var constructorParametersByName = constructorParameters.ToDictionary(cp => cp.Name);
+            var parameters = new Dictionary<string, object>();
+            // get name translations for XML
+            var xmlNameToConstructorName =
+                new Dictionary<string, string>();
+            foreach (var constructorParameter in constructorParameters)
+            {
+                var parameterName = constructorParameter.Name;
+                var xmlNameAttributes =
+                    constructorParameter.GetCustomAttributes(typeof(XmlNameAttribute), false);
+                if (xmlNameAttributes.Length != 0)
+                    xmlNameToConstructorName[
+                        ((XmlNameAttribute)xmlNameAttributes[0]).Value] =
+                        parameterName;
+                else
+                    xmlNameToConstructorName[
+                        char.ToUpper(parameterName[0]) + parameterName.Substring(1)] =
+                        parameterName;
+            }
+            // parse sub-nodes
+            var nodeExtensions = new Dictionary<string, Extension>();
+            while (element.NodesEnumerator.MoveNext())
+            {
+                var currentNode = element.NodesEnumerator.Current;
+                // skip attribute if type attribute
+                if (typeAttribute != null && currentNode is XmlParser.Attribute &&
+                    currentNode.Name.Equals(typeAttribute))
+                    continue;
+                // check name
+                string name = null;
+                xmlNameToConstructorName.TryGetValue(currentNode.Name, out name);
+                if (name == null || !constructorParametersByName.ContainsKey(name))
+                {
+                    var extension = currentNode.ConsumeAndGetExtension();
+                    throw new UnknownParameterException(name,
+                        extension.StartLineNumber, extension.StartLinePosition,
+                        extension.EndLineNumber, extension.EndLinePosition);
+                }
+                // parse sub-element
+                parameters[name] = deserialize(
+                    constructorParametersByName[name].ParameterType,
+                    currentNode);
+                // mark as read
+                constructorParametersByName.Remove(name);
+                // save position
+                nodeExtensions[name] = currentNode.ConsumeAndGetExtension();
+            }
+            // fill parameters from defaults
+            var fillerParameters = constructorParametersByName.Values
+                .Where(parameter => parameter.RawDefaultValue != DBNull.Value)
+                .ToList();
+            foreach (var fillerParameter in fillerParameters)
+            {
+                parameters[fillerParameter.Name] = fillerParameter.RawDefaultValue;
+                constructorParametersByName.Remove(fillerParameter.Name);
+            }
+            // fill parameters from DefaultValueAttribute
+            foreach (var missingParameter in constructorParametersByName.Values.ToList())
+            {
+                var defaultValueAttributes = missingParameter.GetCustomAttributes(
+                    typeof(DefaultValueAttribute), false);
+                if (defaultValueAttributes.Length > 0)
+                {
+                    parameters[missingParameter.Name] =
+                        ((DefaultValueAttribute)defaultValueAttributes[0]).Value(type);
+                    constructorParametersByName.Remove(missingParameter.Name);
+                }
+            }
+            // check missing
+            if (constructorParametersByName.Count > 0)
+            {
+                var extension = node.ConsumeAndGetExtension();
+                throw new MissingParametersException(constructorParametersByName.Keys,
+                    extension.StartLineNumber, extension.StartLinePosition,
+                    extension.EndLineNumber, extension.EndLinePosition);
+            }
+            // create object
+            try
+            {
+                return constructor.Invoke(
+                    (from parameter in constructorParameters
+                     select parameters[parameter.Name]).ToArray());
+            }
+            catch (TargetInvocationException tie)
+            {
+                if (tie.InnerException is ArgumentException)
+                {
+                    var ae = tie.InnerException as ArgumentException;
+                    if (ae.ParamName != null && nodeExtensions.ContainsKey(ae.ParamName))
+                    {
+                        var extension = nodeExtensions[ae.ParamName];
+                        throw new UnhandledException(ae,
+                            extension.StartLineNumber, extension.StartLinePosition,
+                            extension.EndLineNumber, extension.EndLinePosition);
+                    }
+                }
+                throw tie.InnerException;
+            }
+        }
+
         private bool isSimpleType(Type type)
         {
             return type == typeof(int) ||
@@ -284,7 +294,7 @@ namespace RedParser
                 type.IsEnum;
         }
 
-        private object parseAs(Type type, SimpleContent simpleContent)
+        private object deserializeSimpleContent(Type type, SimpleContent simpleContent)
         {
             var invariant = System.Globalization.CultureInfo.InvariantCulture;
             if (type == typeof(int))
