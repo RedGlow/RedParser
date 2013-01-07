@@ -8,6 +8,7 @@ namespace RedParserTests
     class SimpleDerivedClass: SimpleBaseClass
     {
         public readonly string Y;
+
         public SimpleDerivedClass(int x, string y)
             : base(x)
         {
