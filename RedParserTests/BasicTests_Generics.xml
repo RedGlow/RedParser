@@ -1,0 +1,4 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<GenericType Variable1="42">
+  <Variable2>99</Variable2>
+</GenericType>

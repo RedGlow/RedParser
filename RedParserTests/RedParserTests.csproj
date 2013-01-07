@@ -48,6 +48,7 @@
   <ItemGroup>
     <Compile Include="AllParameters.cs" />
     <Compile Include="EnumerationOfBase.cs" />
+    <Compile Include="GenericType.cs" />
     <Compile Include="SimpleBaseClass.cs" />
     <Compile Include="JustOneEnumerableParameter.cs" />
     <Compile Include="JustOneEnumParameter.cs" />
@@ -91,6 +92,9 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="BasicTests_AllParameters.xml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="BasicTests_Generics.xml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
   </ItemGroup>

@@ -98,5 +98,13 @@ namespace RedParserTests
                 },
                 x.Enumeration);
         }
+
+        [TestMethod]
+        public void TestGenerics()
+        {
+            var x = Parse<GenericType<int>>("BasicTests_Generics.xml");
+            Assert.AreEqual(42, x.Variable1);
+            Assert.AreEqual(99, x.Variable2);
+        }
     }
 }
